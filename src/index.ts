@@ -10,6 +10,7 @@ import type { OutputFormat } from "./types";
 
 export class GoogleSearchEngineMCP extends McpAgent {
   searchService = new GoogleSearchService();
+
   contentExtractor = new ContentExtractor();
 
   server = new McpServer(
@@ -123,7 +124,7 @@ export class GoogleSearchEngineMCP extends McpAgent {
           },
         },
       },
-    },
+    }
   );
 
   async init() {
@@ -136,7 +137,7 @@ export class GoogleSearchEngineMCP extends McpAgent {
       },
       async ({ a, b }, extra) => {
         return { content: [{ type: "text", text: String(a + b) }] };
-      },
+      }
     );
 
     this.server.tool(
@@ -146,61 +147,61 @@ export class GoogleSearchEngineMCP extends McpAgent {
         query: z
           .string()
           .describe(
-            "Search query - be specific and use quotes for exact matches. For best results, use clear keywords and avoid very long queries.",
+            "Search query - be specific and use quotes for exact matches. For best results, use clear keywords and avoid very long queries."
           ),
         num_results: z
           .number()
           .optional()
           .describe(
-            "Number of results to return (default: 5, max: 10). Increase for broader coverage, decrease for faster response.",
+            "Number of results to return (default: 5, max: 10). Increase for broader coverage, decrease for faster response."
           ),
         site: z
           .string()
           .optional()
           .describe(
-            'Limit search results to a specific website domain (e.g., "wikipedia.org" or "nytimes.com").',
+            'Limit search results to a specific website domain (e.g., "wikipedia.org" or "nytimes.com").'
           ),
         language: z
           .string()
           .optional()
           .describe(
-            'Filter results by language using ISO 639-1 codes (e.g., "en" for English, "es" for Spanish, "fr" for French).',
+            'Filter results by language using ISO 639-1 codes (e.g., "en" for English, "es" for Spanish, "fr" for French).'
           ),
         dateRestrict: z
           .string()
           .optional()
           .describe(
-            'Filter results by date using Google\'s date restriction format: "d[number]" for past days, "w[number]" for past weeks, "m[number]" for past months, or "y[number]" for past years. Example: "m6" for results from the past 6 months.',
+            'Filter results by date using Google\'s date restriction format: "d[number]" for past days, "w[number]" for past weeks, "m[number]" for past months, or "y[number]" for past years. Example: "m6" for results from the past 6 months.'
           ),
         exactTerms: z
           .string()
           .optional()
           .describe(
-            "Search for results that contain this exact phrase. This is equivalent to putting the terms in quotes in the search query.",
+            "Search for results that contain this exact phrase. This is equivalent to putting the terms in quotes in the search query."
           ),
         resultType: z
           .string()
           .optional()
           .describe(
-            'Specify the type of results to return. Options include "image" (or "images"), "news", and "video" (or "videos"). Default is general web results.',
+            'Specify the type of results to return. Options include "image" (or "images"), "news", and "video" (or "videos"). Default is general web results.'
           ),
         page: z
           .number()
           .optional()
           .describe(
-            "Page number for paginated results (starts at 1). Use in combination with resultsPerPage to navigate through large result sets.",
+            "Page number for paginated results (starts at 1). Use in combination with resultsPerPage to navigate through large result sets."
           ),
         resultsPerPage: z
           .number()
           .optional()
           .describe(
-            "Number of results to show per page (default: 5, max: 10). Controls how many results are returned for each page.",
+            "Number of results to show per page (default: 5, max: 10). Controls how many results are returned for each page."
           ),
         sort: z
           .string()
           .optional()
           .describe(
-            'Sorting method for search results. Options: "relevance" (default) or "date" (most recent first).',
+            'Sorting method for search results. Options: "relevance" (default) or "date" (most recent first).'
           ),
       },
       async (params, extra) => {
@@ -218,7 +219,7 @@ export class GoogleSearchEngineMCP extends McpAgent {
             sort: params?.sort,
           },
         });
-      },
+      }
     );
 
     this.server.tool(
@@ -228,21 +229,23 @@ export class GoogleSearchEngineMCP extends McpAgent {
         url: z
           .string()
           .describe(
-            "Full URL of the webpage to extract content from (must start with http:// or https://). Ensure the URL is from a public webpage and not behind authentication.",
+            "Full URL of the webpage to extract content from (must start with http:// or https://). Ensure the URL is from a public webpage and not behind authentication."
           ),
         format: z
           .string()
           .optional()
           .describe(
-            'Output format for the extracted content. Options: "markdown" (default), "html", or "text".',
+            'Output format for the extracted content. Options: "markdown" (default), "html", or "text".'
           ),
       },
       async (params, extra) => {
         return await this.handleAnalyzeWebpage({
           url: params.url,
-          format: params.format ? (String(params.format) as OutputFormat) : "markdown",
+          format: params.format
+            ? (String(params.format) as OutputFormat)
+            : "markdown",
         });
-      },
+      }
     );
 
     this.server.tool(
@@ -252,22 +255,24 @@ export class GoogleSearchEngineMCP extends McpAgent {
         urls: z
           .array(z.string())
           .describe(
-            "Array of webpage URLs to extract content from. Each URL must be public and start with http:// or https://. Maximum 5 URLs per request.",
+            "Array of webpage URLs to extract content from. Each URL must be public and start with http:// or https://. Maximum 5 URLs per request."
           ),
         format: z
           .string()
           .optional()
           .describe(
-            'Output format for the extracted content. Options: "markdown" (default), "html", or "text".',
+            'Output format for the extracted content. Options: "markdown" (default), "html", or "text".'
           ),
       },
       async (params, extra) => {
         const result = await this.handleBatchAnalyzeWebpages({
           urls: params.urls,
-          format: params.format ? (String(params.format) as OutputFormat) : "markdown",
+          format: params.format
+            ? (String(params.format) as OutputFormat)
+            : "markdown",
         });
         return result;
-      },
+      }
     );
   }
 
@@ -286,11 +291,12 @@ export class GoogleSearchEngineMCP extends McpAgent {
     };
   }): Promise<CallToolResult> {
     try {
-      const { results, pagination, categories } = await this.searchService.search(
-        args.query,
-        args.num_results,
-        args.filters,
-      );
+      const { results, pagination, categories } =
+        await this.searchService.search(
+          args.query,
+          args.num_results,
+          args.filters
+        );
 
       if (results.length === 0) {
         return {
@@ -317,13 +323,18 @@ export class GoogleSearchEngineMCP extends McpAgent {
 
       // Add category summary if available
       if (categories && categories.length > 0) {
-        responseText +=
-          `Categories: ${categories.map((c) => `${c.name} (${c.count})`).join(", ")}\n\n`;
+        responseText += `Categories: ${categories
+          .map((c) => `${c.name} (${c.count})`)
+          .join(", ")}\n\n`;
       }
 
       // Add pagination info
       if (pagination) {
-        responseText += `Showing page ${pagination.currentPage}${pagination.totalResults ? ` of approximately ${pagination.totalResults} results` : ""}\n\n`;
+        responseText += `Showing page ${pagination.currentPage}${
+          pagination.totalResults
+            ? ` of approximately ${pagination.totalResults} results`
+            : ""
+        }\n\n`;
       }
 
       // Add each result in a readable format
@@ -334,13 +345,20 @@ export class GoogleSearchEngineMCP extends McpAgent {
       });
 
       // Add navigation hints if pagination exists
-      if (pagination && (pagination.hasNextPage || pagination.hasPreviousPage)) {
+      if (
+        pagination &&
+        (pagination.hasNextPage || pagination.hasPreviousPage)
+      ) {
         responseText += "Navigation: ";
         if (pagination.hasPreviousPage) {
-          responseText += `Use 'page: ${pagination.currentPage - 1}' for previous results. `;
+          responseText += `Use 'page: ${
+            pagination.currentPage - 1
+          }' for previous results. `;
         }
         if (pagination.hasNextPage) {
-          responseText += `Use 'page: ${pagination.currentPage + 1}' for more results.`;
+          responseText += `Use 'page: ${
+            pagination.currentPage + 1
+          }' for more results.`;
         }
         responseText += "\n";
       }
@@ -354,7 +372,8 @@ export class GoogleSearchEngineMCP extends McpAgent {
         ],
       };
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error during search";
+      const message =
+        error instanceof Error ? error.message : "Unknown error during search";
       return {
         content: [{ type: "text", text: message }],
         isError: true,
@@ -367,7 +386,10 @@ export class GoogleSearchEngineMCP extends McpAgent {
     format?: OutputFormat;
   }): Promise<CallToolResult> {
     try {
-      const content = await this.contentExtractor.extractContent(args.url, args.format);
+      const content = await this.contentExtractor.extractContent(
+        args.url,
+        args.format
+      );
 
       // Format the response in a more readable, concise way
       let responseText = `Content from: ${content.url}\n\n`;
@@ -388,7 +410,8 @@ export class GoogleSearchEngineMCP extends McpAgent {
       responseText += `Content Preview:\n${content.content_preview.first_500_chars}\n\n`;
 
       // Add a note about requesting specific information
-      responseText += "Note: This is a preview of the content. For specific information, please ask about particular aspects of this webpage.";
+      responseText +=
+        "Note: This is a preview of the content. For specific information, please ask about particular aspects of this webpage.";
 
       return {
         content: [
@@ -399,7 +422,8 @@ export class GoogleSearchEngineMCP extends McpAgent {
         ],
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
       const helpText =
         "Common issues:\n- Check if the URL is accessible in a browser\n- Ensure the webpage is public\n- Try again if it's a temporary network issue";
 
@@ -432,7 +456,10 @@ export class GoogleSearchEngineMCP extends McpAgent {
     }
 
     try {
-      const results = await this.contentExtractor.batchExtractContent(args.urls, args.format);
+      const results = await this.contentExtractor.batchExtractContent(
+        args.urls,
+        args.format
+      );
 
       // Format the response in a more readable, concise way
       let responseText = `Content from ${args.urls.length} webpages:\n\n`;
@@ -458,10 +485,14 @@ export class GoogleSearchEngineMCP extends McpAgent {
           responseText += `Summary: ${result.summary}\n`;
         }
 
-        responseText += `Preview: ${result.content_preview.first_500_chars.substring(0, 150)}...\n\n`;
+        responseText += `Preview: ${result.content_preview.first_500_chars.substring(
+          0,
+          150
+        )}...\n\n`;
       }
 
-      responseText += "Note: These are previews of the content. To analyze the full content of a specific URL, use the extract_webpage_content tool with that URL.";
+      responseText +=
+        "Note: These are previews of the content. To analyze the full content of a specific URL, use the extract_webpage_content tool with that URL.";
 
       return {
         content: [
@@ -472,7 +503,8 @@ export class GoogleSearchEngineMCP extends McpAgent {
         ],
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
       const helpText =
         "Common issues:\n- Check if all URLs are accessible in a browser\n- Ensure all webpages are public\n- Try again if it's a temporary network issue\n- Consider reducing the number of URLs";
 
@@ -501,3 +533,5 @@ export default new OAuthProvider({
   tokenEndpoint: "/token",
   clientRegistrationEndpoint: "/register",
 });
+
+export { GoogleSearchEngineMCP as MyMCP };

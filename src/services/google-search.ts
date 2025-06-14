@@ -1,5 +1,9 @@
-import { google } from "googleapis";
-import type { SearchResult, SearchFilters, SearchPaginationInfo, CategoryInfo } from "../types";
+import type {
+  SearchResult,
+  SearchFilters,
+  SearchPaginationInfo,
+  CategoryInfo,
+} from "../types";
 import { URL } from "node:url";
 
 interface CacheEntry {
@@ -11,12 +15,66 @@ interface CacheEntry {
   };
 }
 
+// Google Custom Search API response interfaces
+interface GoogleSearchItem {
+  title?: string;
+  link?: string;
+  snippet?: string;
+  pagemap?: Record<string, any>;
+}
+
+interface GoogleSearchInformation {
+  totalResults?: string;
+}
+
+interface GoogleSearchResponse {
+  items?: GoogleSearchItem[];
+  searchInformation?: GoogleSearchInformation;
+}
+
+// Custom Google Custom Search API client
+class CustomSearchClient {
+  private apiKey: string;
+
+  constructor(apiKey: string) {
+    this.apiKey = apiKey;
+  }
+
+  async list(
+    params: Record<string, any>
+  ): Promise<{ data: GoogleSearchResponse }> {
+    const url = new URL("https://www.googleapis.com/customsearch/v1");
+
+    // Add API key to parameters
+    const searchParams = new URLSearchParams({
+      key: this.apiKey,
+      ...Object.fromEntries(
+        Object.entries(params).map(([key, value]) => [key, String(value)])
+      ),
+    });
+
+    url.search = searchParams.toString();
+
+    const response = await fetch(url.toString());
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Google Custom Search API error: ${response.status} ${response.statusText} - ${errorText}`
+      );
+    }
+
+    const data = (await response.json()) as GoogleSearchResponse;
+    return { data };
+  }
+}
+
 export class GoogleSearchService {
   // Cache for search results (key: query string + filters, value: results)
   private searchCache: Map<string, CacheEntry> = new Map();
   // Cache expiration time in milliseconds (5 minutes)
   private cacheTTL: number = 5 * 60 * 1000;
-  private customSearch;
+  private customSearch: CustomSearchClient;
   private searchEngineId: string;
 
   constructor() {
@@ -25,24 +83,23 @@ export class GoogleSearchService {
 
     if (!apiKey || !searchEngineId) {
       throw new Error(
-        "Missing required environment variables: GOOGLE_API_KEY and GOOGLE_SEARCH_ENGINE_ID",
+        "Missing required environment variables: GOOGLE_API_KEY and GOOGLE_SEARCH_ENGINE_ID"
       );
     }
 
-    // Initialize Google Custom Search API
-    this.customSearch = google.customsearch("v1").cse;
+    // Initialize custom Google Custom Search API client
+    this.customSearch = new CustomSearchClient(apiKey);
     this.searchEngineId = searchEngineId;
-
-    // Set up the API client
-    google.options({
-      auth: apiKey,
-    });
   }
 
   /**
    * Generate a cache key from search parameters
    */
-  private generateCacheKey(query: string, numResults: number, filters?: SearchFilters): string {
+  private generateCacheKey(
+    query: string,
+    numResults: number,
+    filters?: SearchFilters
+  ): string {
     return JSON.stringify({
       query,
       numResults,
@@ -65,7 +122,7 @@ export class GoogleSearchService {
     cacheKey: string,
     results: SearchResult[],
     pagination?: SearchPaginationInfo,
-    categories?: CategoryInfo[],
+    categories?: CategoryInfo[]
   ): void {
     this.searchCache.set(cacheKey, {
       timestamp: Date.now(),
@@ -76,7 +133,7 @@ export class GoogleSearchService {
     if (this.searchCache.size > 100) {
       // Delete oldest entry
       const oldestKey = Array.from(this.searchCache.entries()).sort(
-        (a, b) => a[1].timestamp - b[1].timestamp,
+        (a, b) => a[1].timestamp - b[1].timestamp
       )[0][0];
       this.searchCache.delete(oldestKey);
     }
@@ -85,7 +142,7 @@ export class GoogleSearchService {
   async search(
     query: string,
     numResults = 5,
-    filters?: SearchFilters,
+    filters?: SearchFilters
   ): Promise<{
     results: SearchResult[];
     pagination?: SearchPaginationInfo;
@@ -196,13 +253,14 @@ export class GoogleSearchService {
       }
 
       // Map the search results and categorize them
-      const results = response.data.items.map((item) => {
+      const results = response.data.items.map((item: GoogleSearchItem) => {
         const result: SearchResult = {
           title: item.title || "",
           link: item.link || "",
           snippet: item.snippet || "",
           pagemap: item.pagemap || {},
-          datePublished: item.pagemap?.metatags?.[0]?.["article:published_time"] || "",
+          datePublished:
+            item.pagemap?.metatags?.[0]?.["article:published_time"] || "",
           source: "google_search",
         };
 
@@ -216,7 +274,10 @@ export class GoogleSearchService {
       const categories = this.generateCategoryStats(results);
 
       // Create pagination information
-      const totalResults = Number.parseInt(response.data.searchInformation?.totalResults || "0", 10);
+      const totalResults = Number.parseInt(
+        response.data.searchInformation?.totalResults || "0",
+        10
+      );
       const totalPages = Math.ceil(totalResults / resultsPerPage);
 
       const pagination: SearchPaginationInfo = {
@@ -258,33 +319,39 @@ export class GoogleSearchService {
       // Check if this is a social media site
       if (
         domain.match(
-          /facebook\.com|twitter\.com|instagram\.com|linkedin\.com|pinterest\.com|tiktok\.com|reddit\.com/i,
+          /facebook\.com|twitter\.com|instagram\.com|linkedin\.com|pinterest\.com|tiktok\.com|reddit\.com/i
         )
       ) {
         return "Social Media";
       }
 
       // Check if this is a video site
-      if (domain.match(/youtube\.com|vimeo\.com|dailymotion\.com|twitch\.tv/i)) {
+      if (
+        domain.match(/youtube\.com|vimeo\.com|dailymotion\.com|twitch\.tv/i)
+      ) {
         return "Video";
       }
 
       // Check if this is a news site
       if (
-        domain.match(/news|cnn\.com|bbc\.com|nytimes\.com|wsj\.com|reuters\.com|bloomberg\.com/i)
+        domain.match(
+          /news|cnn\.com|bbc\.com|nytimes\.com|wsj\.com|reuters\.com|bloomberg\.com/i
+        )
       ) {
         return "News";
       }
 
       // Check if this is an educational site
-      if (domain.match(/\.edu$|wikipedia\.org|khan|course|learn|study|academic/i)) {
+      if (
+        domain.match(/\.edu$|wikipedia\.org|khan|course|learn|study|academic/i)
+      ) {
         return "Educational";
       }
 
       // Check if this is a documentation site
       if (
         domain.match(
-          /docs|documentation|developer|github\.com|gitlab\.com|bitbucket\.org|stackoverflow\.com/i,
+          /docs|documentation|developer|github\.com|gitlab\.com|bitbucket\.org|stackoverflow\.com/i
         ) ||
         result.title.match(/docs|documentation|api|reference|manual/i)
       ) {
@@ -292,7 +359,11 @@ export class GoogleSearchService {
       }
 
       // Check if this is a shopping site
-      if (domain.match(/amazon\.com|ebay\.com|etsy\.com|walmart\.com|shop|store|buy/i)) {
+      if (
+        domain.match(
+          /amazon\.com|ebay\.com|etsy\.com|walmart\.com|shop|store|buy/i
+        )
+      ) {
         return "Shopping";
       }
 
