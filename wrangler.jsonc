@@ -8,26 +8,30 @@
   "main": "src/index.ts",
   "compatibility_date": "2025-03-10",
   "compatibility_flags": ["nodejs_compat"],
-  "migrations": [
-    {
-      "tag": "v1",
-      "new_classes": [
-        "MyMCP"
-      ]
-    }
-  ],
-  "durable_objects": {
-    "bindings": [
-      {
-        "class_name": "MyMCP",
-        "name": "MCP_OBJECT"
-      }
-    ]
+  "vars": {
+    "GOOGLE_API_KEY": "",
+    "GOOGLE_SEARCH_ENGINE_ID": "",
   },
+	"migrations": [
+		{
+			"new_sqlite_classes": [
+				"MyMCP"
+			],
+			"tag": "v1"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"class_name": "MyMCP",
+				"name": "MCP_OBJECT"
+			}
+		]
+	},
   "kv_namespaces": [
     {
       "binding": "OAUTH_KV",
-      "id": "fa719fb7aea842808fab67fdc75c7f3e"
+      "id": "9e428ba753374e61b665eca61a29bb79"
     }
   ],
   "observability": {

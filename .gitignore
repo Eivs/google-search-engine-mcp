@@ -4,6 +4,8 @@ node_modules
 .idea
 .vscode
 .zed
+.env
+.dev.vars
 # Logs
 
 logs

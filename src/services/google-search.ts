@@ -5,6 +5,7 @@ import type {
   CategoryInfo,
 } from "../types";
 import { URL } from "node:url";
+import { env } from "cloudflare:workers";
 
 interface CacheEntry {
   timestamp: number;
@@ -78,8 +79,8 @@ export class GoogleSearchService {
   private searchEngineId: string;
 
   constructor() {
-    const apiKey = process.env.GOOGLE_API_KEY;
-    const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID;
+    const apiKey = env.GOOGLE_API_KEY;
+    const searchEngineId = env.GOOGLE_SEARCH_ENGINE_ID;
 
     if (!apiKey || !searchEngineId) {
       throw new Error(
