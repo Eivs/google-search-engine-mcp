@@ -1,4 +1,3 @@
-import axios from "axios";
 import * as cheerio from "cheerio";
 import { Readability } from "@mozilla/readability";
 import { JSDOM } from "jsdom";
@@ -132,17 +131,22 @@ export class ContentExtractor {
     }
 
     try {
-      // Fetch webpage content
-      const response = await axios.get(url, {
+      const response = await fetch(url, {
         headers: {
           "User-Agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
         },
-        timeout: 10000,
+        signal: AbortSignal.timeout(10000),
       });
 
+      if (!response.ok) {
+        throw new Error(`Failed to fetch webpage: ${response.status} ${response.statusText}`);
+      }
+
+      const html = await response.text();
+
       // Parse with Cheerio for metadata
-      const $ = cheerio.load(response.data);
+      const $ = cheerio.load(html);
       const metaTags: Record<string, string> = {};
 
       // Only extract the most important meta tags to reduce data volume
@@ -165,7 +169,7 @@ export class ContentExtractor {
       });
 
       // Use Readability for main content extraction
-      const dom = new JSDOM(response.data);
+      const dom = new JSDOM(html);
       const reader = new Readability(dom.window.document);
       const article = reader.parse();
 
@@ -218,7 +222,7 @@ export class ContentExtractor {
 
       return content;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
+      if (error instanceof Error) {
         throw new Error(`Failed to fetch webpage: ${error.message}`);
       }
       throw error;

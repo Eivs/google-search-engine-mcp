@@ -1,10 +1,10 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.6.2/schema.json",
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "organizeImports": {
     "enabled": true
   },
   "files": {
-    "ignore": ["worker-configuration.d.ts"]
+    "ignore": ["worker-configuration.d.ts"],
   },
   "vcs": {
     "enabled": true,
@@ -18,7 +18,6 @@
       "suspicious": {
         "noExplicitAny": "off",
         "noDebugger": "off",
-        "noConsoleLog": "off",
         "noConfusingVoidType": "off"
       },
       "style": {

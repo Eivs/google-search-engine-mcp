@@ -1,53 +1,56 @@
-# Remote MCP Server on Cloudflare
+# Google Search Engine MCP Server
 
-Let's get a remote MCP server up-and-running on Cloudflare Workers complete with OAuth login!
+An MCP (Model Context Protocol) server based on Cloudflare Workers, providing Google search and webpage content extraction functionality with integrated OAuth login.
 
-## Develop locally
+## Local Development
 
 ```bash
-# clone the repository
-git clone https://github.com/cloudflare/ai.git
-# Or if using ssh:
-# git clone git@github.com:cloudflare/ai.git
+# Clone the repository
+git clone https://github.com/your-username/google-search-engine-mcp-server.git
 
-# install dependencies
-cd ai
-# Note: using pnpm instead of just "npm"
-pnpm install
+# Install dependencies
+cd google-search-engine-mcp-server
+npm install
 
-# run locally
-npx nx dev remote-mcp-server
+# Run locally
+npm run dev
 ```
 
-You should be able to open [`http://localhost:8787/`](http://localhost:8787/) in your browser
+Visit [`http://localhost:8787/`](http://localhost:8787/) to check the server status
 
-## Connect the MCP inspector to your server
+## Connect to MCP Inspector Testing Tool
 
-To explore your new MCP api, you can use the [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector).
+Use the [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector) to explore and test the API:
 
-- Start it with `npx @modelcontextprotocol/inspector`
-- [Within the inspector](http://localhost:5173), switch the Transport Type to `SSE` and enter `http://localhost:8787/sse` as the URL of the MCP server to connect to, and click "Connect"
-- You will navigate to a (mock) user/password login screen. Input any email and pass to login.
-- You should be redirected back to the MCP Inspector and you can now list and call any defined tools!
-
-<div align="center">
-  <img src="img/mcp-inspector-sse-config.png" alt="MCP Inspector with the above config" width="600"/>
-</div>
+- Run `npm run inspector` or `npx @modelcontextprotocol/inspector`
+- In the Inspector interface, set the transport type to `SSE`, URL to `http://localhost:8787/sse`, and click "Connect"
+- Enter any email and password in the mock login interface
+- After logging in, you can view and call all available tools
 
 <div align="center">
-  <img src="img/mcp-inspector-successful-tool-call.png" alt="MCP Inspector with after a tool call" width="600"/>
+  <img src="img/mcp-inspector-sse-config.png" alt="MCP Inspector Configuration Interface" width="600"/>
 </div>
 
-## Connect Claude Desktop to your local MCP server
+## Available Tools
 
-The MCP inspector is great, but we really want to connect this to Claude! Follow [Anthropic's Quickstart](https://modelcontextprotocol.io/quickstart/user) and within Claude Desktop go to Settings > Developer > Edit Config to find your configuration file.
+This server provides the following tools:
 
-Open the file in your text editor and replace it with this configuration:
+1. **google_search** - Perform Google searches and return results
+2. **extract_webpage_content** - Extract webpage content and convert it to readable text
+3. **batch_extract_webpage_content** - Batch extract content from multiple webpages
+
+## Connect to Claude Desktop
+
+To connect Claude to your local MCP server:
+
+1. Follow the [Anthropic Quick Start Guide](https://modelcontextprotocol.io/quickstart/user)
+2. In Claude Desktop, go to Settings > Developer > Edit Config
+3. Replace the existing content with the following configuration:
 
 ```json
 {
   "mcpServers": {
-    "math": {
+    "google-search": {
       "command": "npx",
       "args": [
         "mcp-remote",
@@ -58,63 +61,68 @@ Open the file in your text editor and replace it with this configuration:
 }
 ```
 
-This will run a local proxy and let Claude talk to your MCP server over HTTP
-
-When you open Claude a browser window should open and allow you to login. You should see the tools available in the bottom right. Given the right prompt Claude should ask to call the tool.
+After launching Claude, a browser window will open allowing you to log in. You can see available tools in the bottom right corner. With appropriate prompts, Claude will call the corresponding tools.
 
 <div align="center">
-  <img src="img/available-tools.png" alt="Clicking on the hammer icon shows a list of available tools" width="600"/>
-</div>
-
-<div align="center">
-  <img src="img/claude-does-math-the-fancy-way.png" alt="Claude answers the prompt 'I seem to have lost my calculator and have run out of fingers. Could you use the math tool to add 23 and 19?' by invoking the MCP add tool" width="600"/>
+  <img src="img/available-tools.png" alt="Click the hammer icon to display the list of available tools" width="600"/>
 </div>
 
 ## Deploy to Cloudflare
 
-1. `npx wrangler kv namespace create OAUTH_KV`
-2. Follow the guidance to add the kv namespace ID to `wrangler.jsonc`
-3. `npm run deploy`
+1. Create a KV namespace: `npx wrangler kv namespace create OAUTH_KV`
+2. Follow the prompts to add the KV namespace ID to `wrangler.jsonc`
+3. Set environment variables:
+   - `GOOGLE_API_KEY` - Your Google API key
+   - `GOOGLE_SEARCH_ENGINE_ID` - Your Google Custom Search Engine ID
+4. Deploy: `npm run deploy`
 
-## Call your newly deployed remote MCP server from a remote MCP client
+## Connect to Remote MCP Server
 
-Just like you did above in "Develop locally", run the MCP inspector:
+After deployment, you can use MCP Inspector to connect to the remote server:
 
-`npx @modelcontextprotocol/inspector@latest`
+```bash
+npx @modelcontextprotocol/inspector@latest
+```
 
-Then enter the `workers.dev` URL (ex: `worker-name.account-name.workers.dev/sse`) of your Worker in the inspector as the URL of the MCP server to connect to, and click "Connect".
+Enter your Workers URL (e.g., `your-worker-name.your-account.workers.dev/sse`) as the MCP server address and click "Connect".
 
-You've now connected to your MCP server from a remote MCP client.
+## Connect Claude Desktop to Remote Server
 
-## Connect Claude Desktop to your remote MCP server
-
-Update the Claude configuration file to point to your `workers.dev` URL (ex: `worker-name.account-name.workers.dev/sse`) and restart Claude 
+Update the Claude configuration file to point to your Workers URL:
 
 ```json
 {
   "mcpServers": {
-    "math": {
+    "google-search": {
       "command": "npx",
       "args": [
         "mcp-remote",
-        "https://worker-name.account-name.workers.dev/sse"
+        "https://your-worker-name.your-account.workers.dev/sse"
       ]
     }
   }
 }
 ```
 
-## Debugging
+## Troubleshooting
 
-Should anything go wrong it can be helpful to restart Claude, or to try connecting directly to your
-MCP server on the command line with the following command.
+If you encounter issues:
 
-```bash
-npx mcp-remote http://localhost:8787/sse
-```
+1. Restart Claude
+2. Try connecting to the MCP server directly from the command line:
+   ```bash
+   npx mcp-remote http://localhost:8787/sse
+   ```
+3. Clear the MCP authentication files:
+   ```bash
+   rm -rf ~/.mcp-auth
+   ```
+4. Check console logs for detailed error information
 
-In some rare cases it may help to clear the files added to `~/.mcp-auth`
+## Developer Notes
 
-```bash
-rm -rf ~/.mcp-auth
-```
+- This project is developed using TypeScript
+- Based on Cloudflare Workers and Durable Objects
+- Integrates OAuth authentication
+- Uses Google Custom Search API for search functionality
+- Includes webpage content extraction and analysis features
